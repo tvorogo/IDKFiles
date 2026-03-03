@@ -1,0 +1,8 @@
+import{_ as s,o as n,c as t,a3 as e}from"./chunks/framework.DXXx-gl1.js";const h=JSON.parse('{"title":"将有帮助的视频链接放在这里!","description":"","frontmatter":{},"headers":[],"relativePath":"zh/Videos/Introduction/Introduction.md","filePath":"zh/Videos/Introduction/Introduction.md","lastUpdated":1706612131000}'),p={name:"zh/Videos/Introduction/Introduction.md"};function i(l,a,o,c,d,r){return n(),t("div",null,[...a[0]||(a[0]=[e(`<h1 id="将有帮助的视频链接放在这里" tabindex="-1">将有帮助的视频链接放在这里! <a class="header-anchor" href="#将有帮助的视频链接放在这里" aria-label="Permalink to &quot;将有帮助的视频链接放在这里!&quot;">​</a></h1><ul><li>你可以按照以下格式将你的视频链接放在markdown文档中.</li><li>Tab -&gt; 2 space, 样例:<div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>## 标题</span></span>
+<span class="line"><span>  &gt; [链接](链接)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 简介</span></span>
+<span class="line"><span>  这是视频的简介.</span></span></code></pre></div></li><li>你也可以在下方链接本站文字版教程，或者github上面的文字版教程.<div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>...</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>### 文字版本教程</span></span>
+<span class="line"><span>  &gt; [链接](链接)</span></span></code></pre></div></li></ul>`,2)])])}const _=s(p,[["render",i]]);export{h as __pageData,_ as default};
