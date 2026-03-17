@@ -1,18 +1,16 @@
-# Hi there 👋 How are you? 
+## Hi there 👋 How are you?
+
+## Its my basics stats
+<p>
+  <img src="https://github-readme-stats.vercel.app/api?username=ArKT-7&theme=vision-friendly-dark&show_icons=true&hide_border=true&count_private=true"/>
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ArKT-7&layout=compact&theme=vision-friendly-dark&hide_border=true"/>
+</p>
 
 
-<picture>
-  <source
-    srcset="https://github-readme-stats.vercel.app/api?username=tvorogo&show_icons=true&theme=radical"
-    media="(prefers-color-scheme: dark)"
-  />
-    <source
-    srcset="https://github-readme-stats.vercel.app/api?username=tvorogo&show_icons=true"
-    media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
-  />
-  <img src="https://github-readme-stats.vercel.app/api?username=tvorogo&show_icons=true" />
-</picture>
+> Visits my page
+<p>
+  <img src="https://komarev.com/ghpvc/?username=tvorogo&style=social&label=Profile+Views" height="40"/>
+  &nbsp;&nbsp;<sup><b></b></sup>&nbsp;&nbsp;
+</p>
 
-![](https://komarev.com/ghpvc/?username=tvorogo)
-
-I love this live
+# I love this live <3
