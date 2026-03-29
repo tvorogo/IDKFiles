@@ -4,7 +4,7 @@
 <p>
   <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=tvorogo&layout=compact&theme=vision-friendly-dark&hide_border=true"/>
   <img src="https://streak-stats.demolab.com?user=tvorogo&theme=vision-friendly-dark&hide_border=true&date_format=j%20M%5B%20Y%5D">
-  <img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=tvorogo&theme=vision_friendly_dark"/>
+  
 </p>
 
 
