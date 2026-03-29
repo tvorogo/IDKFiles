@@ -2,7 +2,7 @@
 
 ## Its my basics stats:
 <p>
-  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=hxfuxyy&theme=vision_friendly_dark"/>
+  <img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=tvorogo&theme=vision_friendly_dark"/>
 </p>
 <p>
   <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=tvorogo&layout=compact&theme=vision-friendly-dark&hide_border=true"/>
