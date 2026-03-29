@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>InfinityX — Xiaomi Pad 5 (nabu)</title>
+  <meta name="description" content="InfinityX custom ROM for Xiaomi Pad 5 (nabu) — Android 16, unofficial build. Install guide, web flasher, changelog and more."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #080b12;
+      --bg1:      #0c1018;
+      --bg2:      #101520;
+      --surface:  rgba(255,255,255,.032);
+      --surface-h:rgba(255,255,255,.065);
+      --border:   rgba(255,255,255,.07);
+      --border-h: rgba(255,255,255,.14);
+      --A:        #3b82f6;   /* blue primary */
+      --A2:       #60a5fa;
+      --B:        #a855f7;   /* violet secondary */
+      --B2:       #c084fc;
+      --green:    #34d399;
+      --red:      #f87171;
+      --yellow:   #fbbf24;
+      --text:     #f1f5f9;
+      --text2:    #94a3b8;
+      --text3:    #475569;
+      --code-bg:  #060a10;
+      --glow-a:   rgba(59,130,246,.4);
+      --glow-b:   rgba(168,85,247,.3);
+      --nav-h:    60px;
+      --r:        16px;
+      --rsm:      10px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { overflow-x:hidden; scroll-behavior:smooth; }
+    body {
+      font-family:'Space Grotesk', system-ui, sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+    @keyframes spin     { to{transform:rotate(360deg)} }
+    @keyframes pulse    { 0%,100%{opacity:.5;transform:scale(.85)} 50%{opacity:1;transform:scale(1.15)} }
+    @keyframes shimmer  { from{background-position:200% center} to{background-position:-200% center} }
+    @keyframes modal-in { from{opacity:0;transform:translateY(22px) scale(.97)} to{opacity:1;transform:none} }
+    @keyframes sheet-in { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+    @keyframes glow-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+    @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes rgb-t    { 0%{color:var(--A)} 50%{color:var(--B)} 100%{color:var(--A)} }
+    @keyframes draw-line{ from{stroke-dashoffset:1000} to{stroke-dashoffset:0} }
+
+    /* ── BACKGROUND ── */
+    #bg-canvas { position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0; }
+    .noise-overlay {
+      position:fixed;inset:0;pointer-events:none;z-index:1;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity:.025; mix-blend-mode:overlay;
+    }
+    .scanline-fx { position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;opacity:.016; }
+    .scanline-fx::after {
+      content:'';position:absolute;left:0;right:0;height:2px;
+      background:linear-gradient(transparent,rgba(99,102,241,.8),transparent);
+      animation:scanline 7s linear infinite;
+    }
+
+    /* ── DISCLAIMER BANNER ── */
+    .u-banner {
+      position:fixed;bottom:0;left:0;right:0;z-index:1000;
+      background:rgba(8,11,18,.95);backdrop-filter:blur(20px);
+      border-top:1px solid rgba(59,130,246,.15);
+      padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:10px;
+      font-size:.69rem;color:var(--text3);letter-spacing:.01em;
+    }
+    .u-banner strong { color:var(--yellow);font-weight:600; }
+    .u-close {
+      background:none;border:none;color:var(--text3);cursor:pointer;
+      font-size:.85rem;padding:3px 7px;line-height:1;flex-shrink:0;
+      transition:color .15s;border-radius:5px;
+    }
+    .u-close:hover { color:var(--text2);background:var(--surface); }
+
+    /* ── NAV ── */
+    nav {
+      position:sticky;top:0;z-index:500;height:var(--nav-h);
+      background:rgba(8,11,18,.8);
+      backdrop-filter:blur(32px) saturate(1.6);-webkit-backdrop-filter:blur(32px) saturate(1.6);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;
+      padding:0 clamp(1rem,4vw,2rem);gap:0;
+    }
+    .nav-logo { display:flex;align-items:center;gap:11px;text-decoration:none;flex-shrink:0; }
+    .nav-mark {
+      width:34px;height:34px;border-radius:10px;flex-shrink:0;
+      background:linear-gradient(135deg,var(--A),var(--A2));
+      display:flex;align-items:center;justify-content:center;
+      font-size:.88rem;font-weight:700;color:#000;
+      box-shadow:0 0 18px var(--glow-a);
+      font-family:'Syne',sans-serif;
+    }
+    .nav-name { font-size:.94rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--text);letter-spacing:-.02em; }
+    .nav-sub  { font-size:.64rem;color:var(--text3);font-weight:400;margin-top:1px;letter-spacing:.02em; }
+    .nav-div  { width:1px;height:18px;background:var(--border);margin:0 18px;flex-shrink:0; }
+    .nav-links { display:flex;gap:2px; }
+    .nav-links button {
+      background:none;border:none;color:var(--text2);
+      font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:500;
+      padding:7px 13px;border-radius:8px;cursor:pointer;
+      transition:color .15s,background .15s;white-space:nowrap;
+    }
+    .nav-links button:hover { color:var(--text);background:var(--surface-h); }
+    .nav-right { display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto; }
+    .nav-cta {
+      display:inline-flex;align-items:center;gap:7px;
+      font-family:'Space Grotesk',sans-serif;font-size:.8rem;font-weight:600;
+      padding:7px 16px;border-radius:8px;cursor:pointer;text-decoration:none;
+      color:#000;background:var(--A);border:none;
+      transition:all .2s;white-space:nowrap;
+      box-shadow:0 0 18px var(--glow-a);
+    }
+    .nav-cta:hover { background:var(--A2);box-shadow:0 4px 24px var(--glow-a);transform:translateY(-1px); }
+    .nav-ham {
+      display:none;background:none;border:none;cursor:pointer;
+      padding:8px;color:var(--text2);flex-direction:column;
+      gap:5px;align-items:center;justify-content:center;margin-left:auto;
+    }
+    .nav-ham span { display:block;width:19px;height:1.5px;background:currentColor;border-radius:2px;transition:all .25s; }
+    .nav-ham.is-open span:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .nav-ham.is-open span:nth-child(2) { opacity:0;transform:scaleX(0); }
+    .nav-ham.is-open span:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    @media(max-width:780px) {
+      .nav-links,.nav-div,.nav-right { display:none; }
+      .nav-ham { display:flex; }
+    }
+
+    /* ── MOBILE DRAWER ── */
+    .nav-drawer {
+      display:none;position:fixed;inset:0;top:var(--nav-h);z-index:499;
+      background:rgba(8,11,18,.97);backdrop-filter:blur(28px);
+      flex-direction:column;padding:8px;gap:2px;overflow-y:auto;
+    }
+    .nav-drawer.open { display:flex;animation:fadeUp .2s ease both; }
+    .nav-drawer button, .nav-drawer a {
+      background:none;border:1px solid transparent;
+      color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.93rem;font-weight:500;
+      padding:14px 16px;border-radius:10px;cursor:pointer;
+      text-align:left;text-decoration:none;
+      transition:all .15s;display:flex;align-items:center;gap:10px;
+    }
+    .nav-drawer button:hover, .nav-drawer a:hover {
+      background:var(--surface-h);border-color:var(--border);
+    }
+    .nav-drawer .drawer-divider { height:1px;background:var(--border);margin:6px 0; }
+    .nav-drawer .drawer-cta {
+      background:var(--A);color:#000!important;font-weight:600;
+      box-shadow:0 0 16px var(--glow-a);border-color:transparent!important;
+      margin-top:4px;justify-content:center;
+    }
+    .nav-drawer .drawer-cta:hover { background:var(--A2)!important; }
+
+    /* ── HERO ── */
+    .hero {
+      position:relative;z-index:2;text-align:center;
+      padding:clamp(80px,13vh,120px) clamp(1rem,5vw,2rem) clamp(70px,11vh,100px);
+      min-height:calc(100svh - var(--nav-h));
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    .hero::before {
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(168,85,247,.03) 1px,transparent 1px);
+      background-size:50px 50px;
+      mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 20%,transparent 100%);
+    }
+    .hero-badge {
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);
+      color:var(--A2);font-size:.68rem;font-weight:500;
+      padding:5px 16px;border-radius:100px;margin-bottom:28px;
+      letter-spacing:.08em;text-transform:uppercase;
+      animation:fadeUp .6s ease both;
+      font-family:'IBM Plex Mono',monospace;
+    }
+    .hero-badge-dot {
+      width:6px;height:6px;border-radius:50%;background:var(--A);
+      box-shadow:0 0 6px var(--A);animation:pulse 2.2s ease infinite;flex-shrink:0;
+    }
+    .hero h1 {
+      font-family:'Syne',sans-serif;
+      font-size:clamp(3.2rem,9.5vw,6.8rem);font-weight:800;
+      letter-spacing:-.04em;line-height:1.05;margin-bottom:6px;
+      animation:fadeUp .6s .07s ease both;
+    }
+    .hero h1 .label {
+      display:block;font-family:'IBM Plex Mono',monospace;
+      font-size:.2em;font-weight:400;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--text3);margin-bottom:6px;
+    }
+    .hero h1 .grad {
+      background:linear-gradient(110deg,var(--A) 0%,var(--B) 45%,var(--B2) 70%,var(--A) 100%);
+      background-size:220% auto;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      animation:shimmer 5s linear infinite;display:inline-block;
+    }
+    .hero-tagline {
+      font-size:clamp(.95rem,2.4vw,1.2rem);font-weight:400;color:var(--text2);
+      max-width:440px;margin:18px auto 38px;line-height:1.5;
+      animation:fadeUp .6s .14s ease both;
+    }
+    .hero-tagline span {
+      background:linear-gradient(110deg,var(--A),var(--B));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      font-weight:600;
+    }
+    .hero-actions {
+      display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:52px;
+      animation:fadeUp .6s .21s ease both;
+    }
+    .btn {
+      display:inline-flex;align-items:center;gap:8px;
+      padding:11px 22px;border-radius:10px;
+      font-family:'Space Grotesk',sans-serif;font-size:.84rem;font-weight:600;
+      cursor:pointer;text-decoration:none;transition:all .2s;
+      border:1px solid transparent;white-space:nowrap;
+    }
+    .btn svg { width:14px;height:14px;fill:currentColor;flex-shrink:0; }
+    .btn-primary {
+      background:var(--A);color:#000;
+      box-shadow:0 0 24px var(--glow-a);
+    }
+    .btn-primary:hover { background:var(--A2);box-shadow:0 6px 28px var(--glow-a);transform:translateY(-2px); }
+    .btn-cyan {
+      background:rgba(168,85,247,.1);color:var(--B2);
+      border-color:rgba(168,85,247,.2);
+    }
+    .btn-cyan:hover { background:rgba(168,85,247,.18);border-color:rgba(168,85,247,.4);transform:translateY(-2px); }
+    .btn-ghost {
+      background:var(--surface);color:var(--text);border-color:var(--border);
+    }
+    .btn-ghost:hover { background:var(--surface-h);border-color:var(--border-h);transform:translateY(-2px); }
+
+    /* ── HERO STATS ── */
+    .hero-stats {
+      display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;
+      background:var(--surface);backdrop-filter:blur(16px);max-width:400px;width:100%;
+      animation:fadeUp .6s .28s ease both;
+    }
+    .stat { flex:1;text-align:center;padding:20px 10px;border-right:1px solid var(--border);position:relative; }
+    .stat:last-child { border-right:none; }
+    .stat-val { font-size:1.15rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--text); }
+    .stat-lbl { font-size:.6rem;color:var(--text3);margin-top:4px;letter-spacing:.09em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace; }
+
+    /* ── SECTION ── */
+    .section { position:relative;z-index:2; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display:none;position:fixed;inset:0;z-index:600;
+      background:rgba(0,0,0,.72);backdrop-filter:blur(16px);
+      align-items:flex-start;justify-content:center;
+      padding:40px 16px 60px;overflow-y:auto;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:#0d1117;border:1px solid var(--border);border-radius:20px;
+      width:100%;max-width:800px;
+      box-shadow:0 40px 100px rgba(0,0,0,.8),0 0 0 1px rgba(59,130,246,.05);
+      animation:modal-in .28s cubic-bezier(.16,1,.3,1);flex-shrink:0;
+    }
+    .modal-header {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:22px 26px 20px;border-bottom:1px solid var(--border);
+    }
+    .modal-title { font-size:.95rem;font-weight:700;font-family:'Syne',sans-serif;display:flex;align-items:center;gap:9px; }
+    .modal-close {
+      background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.15);
+      color:var(--text2);width:32px;height:32px;border-radius:8px;
+      cursor:pointer;font-size:.85rem;display:flex;align-items:center;
+      justify-content:center;transition:all .15s;flex-shrink:0;
+    }
+    .modal-close:hover { background:var(--red);color:#fff;border-color:var(--red); }
+    .modal-body { padding:24px 26px 28px; }
+
+    /* ── COMPONENTS ── */
+    .card {
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:20px 22px;margin-bottom:10px;
+      transition:border-color .2s;
+    }
+    .card:hover { border-color:var(--border-h); }
+
+    pre {
+      background:var(--code-bg);border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--rsm);padding:11px 44px 11px 14px;
+      overflow-x:auto;margin:8px 0;position:relative;
+    }
+    code {
+      font-family:'IBM Plex Mono','Fira Code',monospace;
+      font-size:.72rem;color:var(--B2);line-height:1.9;white-space:pre;display:block;
+    }
+    p code, li code {
+      font-family:'IBM Plex Mono',monospace;font-size:.74em;
+      background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.15);
+      padding:1px 6px;border-radius:4px;color:var(--B2);
+    }
+    .copy-btn {
+      position:absolute;top:8px;right:8px;
+      background:rgba(255,255,255,.05);border:1px solid var(--border);
+      color:var(--text3);font-size:.58rem;
+      font-family:'IBM Plex Mono',monospace;padding:3px 9px;
+      border-radius:5px;cursor:pointer;transition:all .15s;letter-spacing:.02em;
+    }
+    .copy-btn:hover { color:var(--A2);border-color:var(--A);background:rgba(59,130,246,.08); }
+    .copy-btn.copied { color:var(--green);border-color:var(--green); }
+
+    .warn {
+      background:rgba(251,191,36,.05);border-left:3px solid var(--yellow);
+      border-radius:0 var(--rsm) var(--rsm) 0;
+      padding:12px 15px;margin:10px 0;font-size:.82rem;color:var(--text2);line-height:1.65;
+    }
+    .warn strong { color:var(--yellow); }
+    .note {
+      background:rgba(59,130,246,.05);border-left:3px solid var(--A);
+      border-radius:0 var(--rsm) var(--rsm) 0;
+      padding:12px 15px;margin:10px 0;font-size:.82rem;color:var(--text2);line-height:1.65;
+    }
+    .note strong { color:var(--A2); }
+    .note a, .details-body a { color:var(--B2);text-decoration:none; }
+    .note a:hover, .details-body a:hover { text-decoration:underline;color:var(--B); }
+
+    .step { display:flex;gap:14px; }
+    .step-num {
+      flex-shrink:0;width:28px;height:28px;
+      background:var(--A);color:#000;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;
+      margin-top:2px;box-shadow:0 0 12px var(--glow-a);
+    }
+    .step-content { flex:1;min-width:0; }
+    .step-content h4 { font-size:.9rem;font-weight:700;margin-bottom:10px;font-family:'Syne',sans-serif; }
+    .step-content p  { color:var(--text2);font-size:.83rem;line-height:1.65; }
+
+    .tabs { display:flex;gap:4px;margin-bottom:13px;flex-wrap:wrap; }
+    .tab {
+      padding:5px 14px;border-radius:8px;border:1px solid var(--border);
+      background:var(--surface);color:var(--text2);font-size:.77rem;font-weight:600;
+      cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;
+    }
+    .tab.active { background:var(--A);border-color:transparent;color:#000; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    details {
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--rsm);margin-bottom:7px;overflow:hidden;transition:border-color .2s;
+    }
+    details[open] { border-color:var(--border-h); }
+    summary {
+      padding:14px 18px;cursor:pointer;font-weight:600;font-size:.85rem;
+      display:flex;align-items:center;gap:10px;list-style:none;
+      user-select:none;font-family:'Space Grotesk',sans-serif;
+    }
+    summary::-webkit-details-marker { display:none; }
+    summary::before {
+      content:'+';font-size:.88rem;color:var(--A);transition:transform .2s;
+      flex-shrink:0;width:17px;text-align:center;font-weight:700;
+    }
+    details[open] summary::before { transform:rotate(45deg);color:var(--A2); }
+    .details-body { padding:0 18px 15px;color:var(--text2);font-size:.83rem;line-height:1.75; }
+    .details-body ul { padding-left:17px; }
+    .details-body li { margin-bottom:5px; }
+
+    .method-selector { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px; }
+    .method-card {
+      border:1.5px solid var(--border);border-radius:var(--rsm);
+      padding:14px;cursor:pointer;transition:all .18s;background:var(--surface);
+    }
+    .method-card.active { border-color:var(--A);background:rgba(59,130,246,.06);box-shadow:0 0 14px rgba(59,130,246,.08); }
+    .method-card-title { font-weight:700;font-size:.82rem;margin-bottom:3px;font-family:'Syne',sans-serif; }
+    .method-card-desc  { color:var(--text2);font-size:.74rem;line-height:1.5; }
+    .method-panel { display:none; }
+    .method-panel.active { display:block; }
+
+    /* ── DOWNLOAD GRID ── */
+    .dl-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+    .dl-card {
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:20px;text-decoration:none;color:var(--text);
+      transition:all .22s;display:flex;flex-direction:column;gap:7px;
+      position:relative;overflow:hidden;
+    }
+    .dl-card::after {
+      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--A),var(--B));opacity:0;transition:opacity .22s;
+    }
+    .dl-card:hover { border-color:var(--border-h);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3); }
+    .dl-card:hover::after { opacity:1; }
+    .dl-card-icon  { font-size:1.4rem; }
+    .dl-card-title { font-weight:700;font-size:.88rem;font-family:'Syne',sans-serif; }
+    .dl-card-desc  { color:var(--text2);font-size:.77rem;line-height:1.55; }
+    .dl-card-tag   {
+      display:inline-block;
+      background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);
+      color:var(--A2);font-family:'IBM Plex Mono',monospace;
+      font-size:.6rem;padding:3px 10px;border-radius:100px;margin-top:2px;width:fit-content;
+    }
+
+    /* ── CHANGELOG ── */
+    .changelog-item { display:flex;gap:13px;margin-bottom:20px; }
+    .changelog-dot  { display:flex;flex-direction:column;align-items:center;flex-shrink:0; }
+    .changelog-dot-circle {
+      width:10px;height:10px;border-radius:50%;
+      background:var(--A);border:2px solid var(--A2);
+      margin-top:5px;box-shadow:0 0 10px var(--glow-a);
+    }
+    .changelog-dot-line { width:1px;flex:1;background:var(--border);margin-top:5px; }
+    .changelog-content  { flex:1;padding-bottom:13px;min-width:0; }
+    .changelog-version  { font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--B2);margin-bottom:5px; }
+    .changelog-title    { font-weight:700;font-size:.86rem;margin-bottom:7px;font-family:'Syne',sans-serif; }
+
+    /* ── DONATE ── */
+    .donate-card {
+      background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.04));
+      border:1px solid rgba(59,130,246,.18);border-radius:var(--r);
+      padding:36px 28px;text-align:center;position:relative;overflow:hidden;
+    }
+    .donate-card::before {
+      content:'∞';position:absolute;font-family:'Syne',sans-serif;
+      font-size:9rem;opacity:.04;right:-15px;top:-25px;font-weight:800;pointer-events:none;
+    }
+    .donate-card h3 { font-size:1.1rem;font-weight:700;margin-bottom:10px;font-family:'Syne',sans-serif; }
+    .donate-card p  { color:var(--text2);font-size:.86rem;margin-bottom:22px;line-height:1.65; }
+    .donate-btn {
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--A);color:#000;text-decoration:none;
+      padding:13px 30px;border-radius:var(--rsm);font-weight:700;
+      font-size:.88rem;transition:all .2s;box-shadow:0 0 22px var(--glow-a);
+      font-family:'Space Grotesk',sans-serif;
+    }
+    .donate-btn:hover { background:var(--A2);transform:translateY(-2px);box-shadow:0 8px 28px var(--glow-a); }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display:inline-block;width:14px;height:14px;
+      border:2px solid var(--border);border-top-color:var(--A2);
+      border-radius:50%;animation:spin .65s linear infinite;
+      vertical-align:middle;margin-right:7px;
+    }
+
+    /* ── FLASH TOOL ── */
+    .flash-status-bar {
+      background:rgba(0,0,0,.45);border:1px solid var(--border);border-radius:var(--rsm);
+      padding:10px 13px;margin-bottom:13px;font-family:'IBM Plex Mono',monospace;
+      font-size:.69rem;color:var(--text2);line-height:1.85;min-height:44px;
+      max-height:110px;overflow-y:auto;
+    }
+    .flash-log-line      { margin:0;padding:0; }
+    .flash-log-line.ok   { color:var(--green); }
+    .flash-log-line.err  { color:var(--red); }
+    .flash-log-line.inf  { color:var(--B2); }
+    .flash-log-line.warn { color:var(--yellow);background:none;border:none;border-radius:0;padding:0;margin:0;font-size:.69rem; }
+    .flash-partitions  { display:flex;flex-direction:column;gap:7px;margin-bottom:15px; }
+    .flash-part-row {
+      display:flex;align-items:center;gap:11px;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--rsm);padding:9px 13px;transition:border-color .2s;
+    }
+    .flash-part-row.ready    { border-color:rgba(52,211,153,.22); }
+    .flash-part-row.flashing { border-color:var(--B);animation:glow-pulse .8s ease infinite; }
+    .flash-part-row.done     { border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.04); }
+    .flash-part-row.error    { border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.04); }
+    .flash-part-icon   { font-size:.88rem;flex-shrink:0;width:19px;text-align:center; }
+    .flash-part-name   { font-family:'IBM Plex Mono',monospace;font-size:.71rem;color:var(--B2);flex:1; }
+    .flash-part-file   { font-size:.69rem;color:var(--text3);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .flash-part-status { font-size:.67rem;font-family:'IBM Plex Mono',monospace;flex-shrink:0;min-width:60px;text-align:right; }
+    .flash-part-status.ok  { color:var(--green); }
+    .flash-part-status.err { color:var(--red); }
+    .flash-part-status.run { color:var(--B); }
+    .flash-progress     { height:2.5px;background:var(--border);border-radius:100px;margin-bottom:15px;overflow:hidden; }
+    .flash-progress-bar { height:100%;width:0;background:linear-gradient(90deg,var(--B),var(--A));border-radius:100px;transition:width .3s; }
+    .flash-btns { display:flex;gap:9px;flex-wrap:wrap; }
+    .flash-btn {
+      display:inline-flex;align-items:center;gap:7px;
+      padding:9px 18px;border-radius:var(--rsm);
+      font-family:'Space Grotesk',sans-serif;font-size:.8rem;font-weight:600;
+      cursor:pointer;border:1px solid var(--border);transition:all .18s;
+    }
+    .flash-btn:disabled { opacity:.38;cursor:not-allowed;transform:none!important; }
+    .flash-btn-connect {
+      background:rgba(168,85,247,.1);color:var(--B2);border-color:rgba(168,85,247,.2);
+    }
+    .flash-btn-connect:not(:disabled):hover { background:rgba(168,85,247,.18);border-color:var(--B);transform:translateY(-1px); }
+    .flash-btn-start   { background:var(--A);color:#000;border-color:transparent;box-shadow:0 0 16px var(--glow-a); }
+    .flash-btn-start:not(:disabled):hover { background:var(--A2);box-shadow:0 4px 22px var(--glow-a);transform:translateY(-1px); }
+    .flash-btn-fetch   { background:var(--surface);color:var(--text2);border-color:var(--border); }
+    .flash-btn-fetch:not(:disabled):hover { background:var(--surface-h);border-color:var(--border-h); }
+    .flash-device-info {
+      display:none;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.16);
+      border-radius:var(--rsm);padding:9px 13px;margin-bottom:11px;
+      font-family:'IBM Plex Mono',monospace;font-size:.69rem;color:var(--B2);
+    }
+    .flash-device-info.visible { display:block; }
+    .flash-warn-webusb {
+      background:rgba(251,191,36,.05);border-left:3px solid var(--yellow);
+      border-radius:0 var(--rsm) var(--rsm) 0;
+      padding:9px 13px;margin-bottom:13px;font-size:.77rem;color:var(--text2);
+    }
+    .flash-warn-webusb strong { color:var(--yellow); }
+
+    /* ── FOOTER ── */
+    footer {
+      position:relative;z-index:2;text-align:center;
+      padding:32px 1rem 60px;border-top:1px solid var(--border);
+      color:var(--text3);font-size:.76rem;
+    }
+    footer a { color:var(--text3);text-decoration:none;transition:color .15s; }
+    footer a:hover { color:var(--A2); }
+    .footer-links { display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:10px; }
+    .footer-sep   { color:var(--text3);font-size:.5rem; }
+    .footer-credit { font-family:'IBM Plex Mono',monospace;font-size:.63rem;color:var(--text3); }
+    .footer-credit .rgb { animation:rgb-t 5s linear infinite;font-weight:700; }
+
+    a { color:var(--A2); }
+
+    /* ── MOBILE SHEET ── */
+    @media(max-width:600px) {
+      .modal-overlay { padding:0 0 0;align-items:flex-end; }
+      .modal {
+        border-radius:20px 20px 0 0;max-height:93svh;
+        overflow-y:auto;animation:sheet-in .3s cubic-bezier(.16,1,.3,1);
+      }
+      .modal-header {
+        padding:22px 18px 15px;position:sticky;top:0;
+        background:rgba(13,17,23,.98);backdrop-filter:blur(8px);z-index:1;
+      }
+      .modal-header::before {
+        content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);
+        width:36px;height:3.5px;background:var(--border-h);border-radius:100px;
+      }
+      .modal-body { padding:14px 18px 28px; }
+      pre { padding:9px 40px 9px 11px; }
+      code { font-size:.65rem; }
+      .dl-grid, .method-selector { grid-template-columns:1fr; }
+      .step { gap:9px; }
+      .step-num { width:25px;height:25px;font-size:.62rem; }
+      .card { padding:15px 16px; }
+      .donate-card { padding:26px 18px; }
+    }
+    @media(max-width:480px) {
+      .hero { padding:52px 1rem 44px; }
+      .hero-badge { font-size:.62rem; }
+      .hero-tagline { font-size:.88rem;margin-bottom:28px; }
+      .hero-actions { flex-direction:column;align-items:stretch; }
+      .btn { justify-content:center;padding:13px 20px; }
+      .hero-stats { max-width:100%; }
+      .stat { padding:17px 8px; }
+      .stat-val { font-size:1.05rem; }
+      .flash-btns { flex-direction:column; }
+      .flash-btn  { width:100%;justify-content:center; }
+    }
+    @media(max-width:360px) {
+      .hero h1 { font-size:2.8rem; }
+    }
+
+    /* ── VIDEO ── */
+    .hero-video-wrap { margin-top:38px;width:100%;max-width:580px;animation:fadeUp .6s .38s ease both; }
+    .hero-video-label {
+      display:flex;align-items:center;gap:7px;
+      font-family:'IBM Plex Mono',monospace;font-size:.67rem;
+      color:var(--text3);letter-spacing:.06em;text-transform:uppercase;
+      margin-bottom:9px;justify-content:center;
+    }
+    .hero-video-dot {
+      width:6px;height:6px;border-radius:50%;
+      background:var(--A);box-shadow:0 0 6px var(--glow-a);
+      animation:pulse 2s ease infinite;flex-shrink:0;
+    }
+    .hero-video {
+      width:100%;border-radius:var(--r);border:1px solid var(--border);
+      box-shadow:0 0 36px rgba(59,130,246,.1),0 20px 50px rgba(0,0,0,.45);display:block;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="noise-overlay"></div>
+<div class="scanline-fx"></div>
+
+<!-- DISCLAIMER -->
+<div class="u-banner" id="u-banner">
+  <strong>Unofficial fan site</strong> — not affiliated with ProjectInfinity-X or Xiaomi · For&nbsp;<strong>Xiaomi Pad 5 (nabu)</strong>&nbsp;only
+  <button class="u-close" onclick="document.getElementById('u-banner').remove()" title="Dismiss">✕</button>
+</div>
+
+<!-- NAV -->
+<nav id="main-nav">
+  <a class="nav-logo" href="#">
+    <div class="nav-mark">∞</div>
+    <div>
+      <div class="nav-name">InfinityX</div>
+      <div class="nav-sub">Xiaomi Pad 5</div>
+    </div>
+  </a>
+  <div class="nav-div"></div>
+  <div class="nav-links">
+    <button onclick="openModal('install-modal')">Guide</button>
+    <button onclick="openModal('changelog-modal')">Changelog</button>
+    <button onclick="openModal('notes-modal')">Notes</button>
+    <button onclick="openModal('help-modal')">Help</button>
+    <button onclick="openModal('donate-modal')">Donate</button>
+  </div>
+  <div class="nav-right">
+    <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener" class="nav-cta">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.026 9.54c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 14.4l-2.95-.924c-.64-.203-.654-.64.136-.948l11.527-4.444c.533-.194 1.001.13.59.164z"/></svg>
+      Telegram
+    </a>
+  </div>
+  <button class="nav-ham" id="hamburger" onclick="toggleMobileNav()" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="nav-drawer" id="mobile-nav" role="navigation" aria-label="Mobile menu">
+  <button onclick="openModal('install-modal');closeMobileNav()">📖&nbsp;&nbsp;Guide</button>
+  <button onclick="openModal('changelog-modal');closeMobileNav()">📋&nbsp;&nbsp;Changelog</button>
+  <button onclick="openModal('notes-modal');closeMobileNav()">📌&nbsp;&nbsp;Notes</button>
+  <button onclick="openModal('help-modal');closeMobileNav()">❓&nbsp;&nbsp;Help</button>
+  <button onclick="openModal('donate-modal');closeMobileNav()">💙&nbsp;&nbsp;Donate</button>
+  <div class="drawer-divider"></div>
+  <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener" onclick="closeMobileNav()">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.026 9.54c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 14.4l-2.95-.924c-.64-.203-.654-.64.136-.948l11.527-4.444c.533-.194 1.001.13.59.164z"/></svg>
+    Telegram
+  </a>
+  <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases/latest" target="_blank" rel="noopener" onclick="closeMobileNav()" class="drawer-cta">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+    Latest Release
+  </a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    nabu · Android 16 · Unofficial
+  </div>
+  <h1>
+    <span class="label">Project</span>
+    <span class="grad">InfinityX</span>
+  </h1>
+  <p class="hero-tagline">For <span>Xiaomi Pad 5</span> — Unofficial Build / Fan Site</p>
+
+  <div class="hero-actions">
+    <button class="btn btn-primary" onclick="openModal('flash-modal')">
+      <svg viewBox="0 0 24 24"><path d="M13 2L4.09 12.97 11 13 11 22 19.91 11.03 13 11z"/></svg>
+      Web Flash
+    </button>
+    <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener" class="btn btn-cyan">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.026 9.54c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 14.4l-2.95-.924c-.64-.203-.654-.64.136-.948l11.527-4.444c.533-.194 1.001.13.59.164z"/></svg>
+      Auto Installer
+    </a>
+    <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases/latest" target="_blank" rel="noopener" class="btn btn-ghost">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      OTA / GitHub
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-val" id="stat-version">—</div>
+      <div class="stat-lbl">Version</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-date">—</div>
+      <div class="stat-lbl">Released</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">nabu</div>
+      <div class="stat-lbl">Device</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5" target="_blank" rel="noopener">GitHub</a>
+    <span class="footer-sep">◦</span>
+    <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener">Telegram</a>
+    <span class="footer-sep">◦</span>
+    <a href="https://linktr.ee/zxcwsurx" target="_blank" rel="noopener">Support</a>
+  </div>
+  <div class="footer-credit">
+    by <span class="rgb">crss5G</span> · 2026 ·
+    ROM source <a href="https://github.com/tejas101k" target="_blank" rel="noopener">tejas101k</a> &amp; <a href="https://github.com/ProjectInfinity-X" target="_blank" rel="noopener">ProjectInfinity-X</a>
+  </div>
+</footer>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- NOTES MODAL -->
+<div class="modal-overlay" id="notes-modal" onclick="overlayClose(event,this)">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-header">
+      <div class="modal-title">📌 Notes &amp; Guides</div>
+      <button class="modal-close" onclick="closeModal('notes-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <details><summary>⚡ Auto Installer Guide</summary><div class="details-body">
+        <p style="margin-bottom:10px">Auto Installer by <a href="https://t.me/ArKT_7" target="_blank" rel="noopener">°⊥⋊ɹ∀°</a> — version 2.0+ supports flashing via TWRP/PBRP or PC scripts.</p>
+        <strong style="color:var(--text);font-size:.84rem">Option 1 — Fastboot (PC)</strong>
+        <ol style="padding-left:18px;margin:8px 0 12px">
+          <li>Extract the ROM .zip file</li>
+          <li>Connect tablet in Fastboot mode</li>
+          <li><strong>Windows:</strong> run <code>install_..._windows.bat</code> (first install) or <code>update_..._windows.bat</code></li>
+          <li><strong>Linux:</strong> run <code>sudo bash ./install_..._linux.sh</code> or <code>sudo bash ./update_..._linux.sh</code></li>
+        </ol>
+        <strong style="color:var(--text);font-size:.84rem">Option 2 — Recovery (TWRP/PBRP)</strong>
+        <ol style="padding-left:18px;margin:8px 0">
+          <li>Download the ZIP to your tablet</li>
+          <li>Boot into TWRP/PBRP recovery</li>
+          <li>Flash the ZIP and reboot</li>
+          <li>If first install: reboot to recovery → Factory Reset → Format Data → type <code>yes</code> → reboot</li>
+        </ol>
+      </div></details>
+
+      <details><summary>🔵 Bluetooth Fix (null MAC)</summary><div class="details-body">
+        <p style="margin-bottom:10px">Fix <code>00:00:00:00:00:00</code> Bluetooth MAC on nabu using Termux.</p>
+        <strong style="color:var(--text);font-size:.84rem">Step 1 — Install Termux &amp; grant root</strong>
+        <ul style="padding-left:18px;margin:8px 0 12px">
+          <li>Download <a href="https://play.google.com/store/apps/details?id=com.termux" target="_blank" rel="noopener">Termux</a> from Play Store</li>
+          <li>KernelSU: open KSU → SuperUser tab → enable for Termux</li>
+          <li>Magisk: run <code>su</code> in Termux, tap Allow in popup</li>
+        </ul>
+        <strong style="color:var(--text);font-size:.84rem">Step 2 — Run commands in Termux</strong>
+        <pre><code>su
+cd
+random_mac=$(busybox hexdump -n6 -e '6/1 "%02X"' /dev/urandom | sed 's/\(..\)/\1:/g' | sed 's/:$//')
+echo "Generated MAC: $random_mac"
+echo $random_mac | sed 's/://g' | xxd -r -p > /sdcard/random_mac.bin
+mkdir -p /dev/tmp/persist
+mount /dev/block/by-name/persist /dev/tmp/persist
+rm -rf /dev/tmp/persist/bluetooth
+mkdir -p /dev/tmp/persist/bluetooth
+cp /sdcard/random_mac.bin /dev/tmp/persist/bluetooth/.bt_nv.bin
+chown 0:0 /dev/tmp/persist/bluetooth/.bt_nv.bin
+chmod 0644 /dev/tmp/persist/bluetooth/.bt_nv.bin
+chcon u:object_r:vendor_persist_bluetooth_file:s0 /dev/tmp/persist/bluetooth/.bt_nv.bin
+chown 0:0 /dev/tmp/persist/bluetooth
+chmod 0755 /dev/tmp/persist/bluetooth
+chcon u:object_r:mnt_vendor_file:s0 /dev/tmp/persist/bluetooth</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+        <p style="margin-top:8px">If no errors — reboot and verify Bluetooth MAC.</p>
+      </div></details>
+
+      <details><summary>💾 Backup &amp; Restore (Swift Backup)</summary><div class="details-body">
+        <p style="margin-bottom:10px">Use <a href="https://play.google.com/store/apps/details?id=org.swiftapps.swiftbackup" target="_blank" rel="noopener">Swift Backup</a> to backup before flashing and restore after.</p>
+        <ol style="padding-left:18px;margin:8px 0">
+          <li>Grant root to Swift Backup (KSU: SuperUser tab / Magisk: Allow popup)</li>
+          <li>Create a full backup via Swift Backup</li>
+          <li>Copy <code>SwiftBackup</code> folder from internal storage to PC or external drive</li>
+          <li>Flash the ROM</li>
+          <li>Install Swift Backup from Play Store, grant root</li>
+          <li>Copy <code>SwiftBackup</code> folder back to internal storage</li>
+          <li>Open Swift Backup — it auto-detects and restores</li>
+        </ol>
+      </div></details>
+
+      <details><summary>🎵 ViperFX — Apply Config / Preset</summary><div class="details-body">
+        <ol style="padding-left:18px;margin:8px 0">
+          <li>Download and save the preset <code>.xml</code> file on your tablet</li>
+          <li>Open ViperFX → Settings (top right) → Audio process files → Import preset</li>
+          <li>Select the file to import</li>
+          <li>Go back → click 2nd-to-last icon top right → select imported preset → Load</li>
+          <li>Play music in background, enable the toggle</li>
+        </ol>
+        <div class="note"><strong>Note:</strong> If it doesn't work — open ViperFX Settings → enable Legacy Mode → toggle off and on again.</div>
+        <p style="margin-top:8px">Download presets: <a href="http://t.me/MissRose_bot?start=notes_-1003564672551_2095600" target="_blank" rel="noopener">viper-dynamic-preset →</a></p>
+      </div></details>
+
+      <details><summary>🔑 KernelSU Next</summary><div class="details-body">
+        <p>Download latest KernelSU Next APK:</p>
+        <a href="https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.0.1/KernelSU_Next_v3.0.1_32967-release.apk" target="_blank" rel="noopener" class="donate-btn" style="display:inline-flex;margin-top:10px;padding:10px 22px;font-size:.82rem">⬇ Download KSU Next v3.0.1</a>
+      </div></details>
+
+      <details><summary>🔓 Unlock Bootloader</summary><div class="details-body">
+        <p>Full guide: <a href="http://t.me/MissRose_bot?start=notes_-1003564672551_2099054" target="_blank" rel="noopener">unlock-bootloader note →</a></p>
+      </div></details>
+
+      <details><summary>📦 Firmware</summary><div class="details-body">
+        <p>Download latest firmware for nabu: <a href="http://t.me/MissRose_bot?start=notes_-1003564672551_2099053" target="_blank" rel="noopener">firmware note →</a></p>
+      </div></details>
+
+      <details><summary>🪟 Fastboot Driver (Windows)</summary><div class="details-body">
+        <ol style="padding-left:18px;margin:8px 0">
+          <li>Download: <a href="https://dl.google.com/android/repository/usb_driver_r13-windows.zip" target="_blank" rel="noopener">usb_driver_r13-windows.zip →</a></li>
+          <li>Extract the ZIP</li>
+          <li>Follow the video below and select the <code>.inf</code> file from the extracted folder</li>
+        </ol>
+        <video style="width:100%;border-radius:var(--rsm);border:1px solid var(--border);margin-top:12px" src="https://huggingface.co/datasets/zxcwsurx/nabu-infinity/resolve/main/video_2026-03-21_15-38-16.mp4" controls></video>
+      </div></details>
+
+      <details><summary>📦 Pixel Launcher</summary><div class="details-body">
+        <p>Guide: <a href="http://t.me/MissRose_bot?start=notes_-1003564672551_2096328" target="_blank" rel="noopener">pixel-launcher note →</a></p>
+      </div></details>
+
+      <details><summary>🔐 Keybox / Play Integrity</summary><div class="details-body">
+        <p>Get a keybox from: <a href="https://t.me/IntegrityBox" target="_blank" rel="noopener">@IntegrityBox →</a></p>
+      </div></details>
+
+      <details><summary>🐛 Report a Bug</summary><div class="details-body">
+        <p>Post in the Telegram group. Your message must include:</p>
+        <ol style="padding-left:18px;margin:8px 0">
+          <li>ROM version (e.g. <code>InfinityX 3.8</code>)</li>
+          <li>Description of the bug</li>
+          <li>Logs if possible</li>
+        </ol>
+        <p>Example: <code>InfinityX 3.8 — I'm facing issue with [...]</code></p>
+        <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener" class="donate-btn" style="display:inline-flex;margin-top:10px;padding:10px 22px;font-size:.82rem">Report in Telegram →</a>
+      </div></details>
+
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOAD MODAL -->
+<div class="modal-overlay" id="dl-modal" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📥 Download</div>
+      <button class="modal-close" onclick="closeModal('dl-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="dl-grid">
+        <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener" class="dl-card">
+          <div class="dl-card-icon">⚡</div>
+          <div class="dl-card-title">Auto Installer</div>
+          <div class="dl-card-desc">Automated Fastboot scripts for Windows &amp; Linux/macOS. Easiest way to install.</div>
+          <div class="dl-card-tag">Telegram · Pinned msg</div>
+        </a>
+        <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases/latest" target="_blank" rel="noopener" class="dl-card">
+          <div class="dl-card-icon">📦</div>
+          <div class="dl-card-title">OTA / Manual</div>
+          <div class="dl-card-desc">InfinityX.zip + boot.img, vendor_boot.img, dtbo.img for ADB sideload or OTA update.</div>
+          <div class="dl-card-tag">GitHub Releases</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL MODAL -->
+<div class="modal-overlay" id="install-modal" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔧 Installation Guide</div>
+      <button class="modal-close" onclick="closeModal('install-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn"><strong>⚠ Warning:</strong> For Xiaomi Pad 5 (nabu) only. Follow every step precisely.</div>
+      <div class="card">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Flash Recovery <span style="color:var(--text2);font-weight:400;font-size:.76rem">— ADB Sideload only</span></h4>
+            <div class="note"><strong>Note:</strong> Skip if using Auto Installer or Web Flasher.</div>
+            <p style="margin:10px 0 6px">Boot into fastboot:</p>
+            <pre><code>adb -d reboot bootloader</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+            <pre><code>fastboot devices</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+            <pre><code>fastboot flash boot boot.img
+fastboot flash vendor_boot vendor_boot.img
+fastboot flash dtbo dtbo.img</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+            <pre><code>fastboot reboot recovery</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+            <div class="warn"><strong>⚠</strong> Do <strong>not</strong> reboot to OS — it will overwrite recovery.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Flash ROM — Choose method</h4>
+            <p style="color:var(--text2);font-size:.82rem;margin-bottom:12px">Select your preferred installation method:</p>
+            <div class="method-selector" style="grid-template-columns:1fr 1fr 1fr">
+              <div class="method-card active" onclick="selectMethod('sideload',this)">
+                <div class="method-card-title">Option A — Manual Flash</div>
+                <div class="method-card-desc">Flash each .img via fastboot + sideload ROM.</div>
+              </div>
+              <div class="method-card" onclick="selectMethod('autoinstaller',this)">
+                <div class="method-card-title">Option B — Auto Installer</div>
+                <div class="method-card-desc">Automated Fastboot scripts.</div>
+              </div>
+              <div class="method-card" onclick="selectMethod('webflasher',this)">
+                <div class="method-card-title">Option C — Web Flasher</div>
+                <div class="method-card-desc">Browser-based. No PC software needed.</div>
+              </div>
+            </div>
+            <div class="method-panel active" id="panel-sideload">
+              <div class="note"><strong>Step 1:</strong> Download <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases/latest" target="_blank" rel="noopener">boot.img, vendor_boot.img, dtbo.img →</a></div>
+              <p style="font-size:.82rem;margin:10px 0 6px">Flash partitions via fastboot:</p>
+              <pre><code>fastboot flash boot boot.img
+fastboot flash vendor_boot vendor_boot.img
+fastboot flash dtbo dtbo.img
+fastboot reboot recovery</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+              <div class="note" style="margin-top:10px"><strong>Step 2:</strong> In recovery → <strong>Apply Update → Apply from ADB</strong>, then:</div>
+              <pre><code>adb -d sideload Path/to/InfinityX.zip</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+            </div>
+            <div class="method-panel" id="panel-autoinstaller">
+              <div class="note"><strong>Note:</strong> Download from <a href="https://t.me/InfinityXnabu" target="_blank" rel="noopener">pinned Telegram message</a>.</div>
+              <div class="tabs" style="margin-top:12px">
+                <button class="tab active" onclick="switchTab(this,'win-i')">Windows</button>
+                <button class="tab" onclick="switchTab(this,'linux-i')">Linux / macOS</button>
+              </div>
+              <div class="tab-content active" id="tab-win-i">
+                <pre><code>fastboot devices</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+                <pre><code>install_..._windows.bat
+update_..._windows.bat</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+              </div>
+              <div class="tab-content" id="tab-linux-i">
+                <pre><code>sudo bash ./install_..._linux.sh
+sudo bash ./update_..._linux.sh</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+              </div>
+            </div>
+            <div class="method-panel" id="panel-webflasher">
+              <div class="warn"><strong>⚠ Chrome / Edge / Opera only</strong> — WebUSB is not supported in Firefox or Safari.</div>
+              <ol style="padding-left:18px;margin:10px 0 12px;font-size:.83rem;color:var(--text2);line-height:1.9">
+                <li>Boot your tablet into <strong style="color:var(--text)">Fastboot mode</strong> (Power + Vol Down)</li>
+                <li>Connect via USB to your PC</li>
+                <li>Click <strong style="color:var(--text)">Web Flash</strong> button on this page</li>
+                <li>Click <strong style="color:var(--text)">Fetch Files</strong> — partitions load automatically</li>
+                <li>Click <strong style="color:var(--text)">Connect Device</strong> and select your tablet</li>
+                <li>Click <strong style="color:var(--text)">Flash</strong> — boot, vendor_boot, dtbo are flashed automatically</li>
+                <li>Device reboots to recovery — go to <strong style="color:var(--text)">Apply Update → Apply from ADB</strong></li>
+                <li>Sideload the ROM zip:</li>
+              </ol>
+              <pre><code>adb sideload Path/to/InfinityX.zip</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+              <button onclick="closeModal('install-modal');openModal('flash-modal')" style="margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:var(--A);color:#000;border:none;padding:10px 22px;border-radius:var(--rsm);font-family:'Space Grotesk',sans-serif;font-size:.83rem;font-weight:700;cursor:pointer;box-shadow:0 0 16px var(--glow-a);">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2L4.09 12.97 11 13 11 22 19.91 11.03 13 11z"/></svg>
+                Open Web Flasher
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><strong>First boot</strong> may take 5–10 minutes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGELOG MODAL -->
+<div class="modal-overlay" id="changelog-modal" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 Changelog</div>
+      <button class="modal-close" onclick="closeModal('changelog-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="changelog-loading" style="text-align:center;padding:34px 0;color:var(--text2)"><span class="spinner"></span>Loading from GitHub…</div>
+      <div id="changelog-content" style="display:none"></div>
+      <div id="changelog-error"   style="display:none" class="warn"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modal-overlay" id="help-modal" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">❓ Troubleshooting</div>
+      <button class="modal-close" onclick="closeModal('help-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <details><summary>Device not detected in fastboot / adb</summary><div class="details-body"><ul>
+        <li>Try a different USB cable — many are charge-only</li>
+        <li>Try USB 2.0 port instead of USB 3.0</li>
+        <li>Windows: install <a href="https://developer.android.com/studio/run/win-usb" target="_blank" rel="noopener">Google USB Driver</a> or <a href="https://adb.clockworkmod.com/" target="_blank" rel="noopener">Universal ADB Driver</a></li>
+        <li>Enable <strong>USB Debugging</strong> in Developer Options</li>
+      </ul></div></details>
+      <details><summary>Boot loop after flashing</summary><div class="details-body"><ul>
+        <li>Recovery → <strong>Factory Reset → Format data</strong></li>
+        <li>Re-flash via ADB sideload</li>
+        <li>Make sure you flashed correct version for <strong>nabu</strong></li>
+      </ul></div></details>
+      <details><summary>Stuck on first boot</summary><div class="details-body"><ul>
+        <li>First boot can take <strong>5–10 minutes</strong></li>
+        <li>If over 15 min: reboot to recovery, Factory Reset, re-flash</li>
+      </ul></div></details>
+      <details><summary>Web Flash — "Array buffer allocation failed"</summary><div class="details-body"><ul>
+        <li>ZIP is too large for browser RAM — switch to <strong>Local .img files</strong> tab</li>
+        <li>Extract ZIP on your PC first, then select each <code>.img</code> individually</li>
+        <li>This avoids loading the entire ZIP into RAM</li>
+      </ul></div></details>
+      <details><summary>Web Flash — other errors</summary><div class="details-body"><ul>
+        <li>Use Chrome, Edge, or Opera — Firefox/Safari don't support WebUSB</li>
+        <li>Device must be in Fastboot mode before clicking Connect</li>
+        <li>Try a different USB cable or port</li>
+      </ul></div></details>
+    </div>
+  </div>
+</div>
+
+<!-- DONATE MODAL -->
+<div class="modal-overlay" id="donate-modal" onclick="overlayClose(event,this)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🧡 Support the Project</div>
+      <button class="modal-close" onclick="closeModal('donate-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="donate-card">
+        <h3>Like InfinityX? Buy us a coffee ☕</h3>
+        <p>InfinityX is developed and maintained for free.<br>Your support helps keep the project alive.</p>
+        <a href="https://linktr.ee/zxcwsurx" target="_blank" rel="noopener" class="donate-btn">🧡 Support / Donate</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLASH MODAL -->
+<div class="modal-overlay" id="flash-modal" onclick="overlayClose(event,this)">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="var(--B)"><path d="M13 2L4.09 12.97 11 13 11 22 19.91 11.03 13 11z"/></svg>
+        Web Fastboot Flasher
+      </div>
+      <button class="modal-close" onclick="closeModal('flash-modal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="flash-warn-webusb">
+        <strong>⚠ Chrome / Edge / Opera only</strong> — WebUSB is not supported in Firefox or Safari.<br>
+        Device must be in <strong>Fastboot mode</strong> before connecting.
+      </div>
+      <div class="flash-device-info" id="flash-device-info">
+        📱 Device: <span id="flash-device-name">—</span> &nbsp;|&nbsp; Slot: <span id="flash-device-slot">—</span>
+      </div>
+      <div class="flash-status-bar" id="flash-log">
+        <p class="flash-log-line inf">Ready. Click "Fetch Files" to load latest release from GitHub.</p>
+      </div>
+      <div class="flash-progress"><div class="flash-progress-bar" id="flash-progress-bar"></div></div>
+      <div class="flash-partitions" id="flash-partitions">
+        <div class="flash-part-row" id="frow-boot">
+          <div class="flash-part-icon">💾</div>
+          <div class="flash-part-name">boot</div>
+          <div class="flash-part-file" id="ffile-boot">not loaded</div>
+          <div class="flash-part-status" id="fstat-boot">—</div>
+        </div>
+        <div class="flash-part-row" id="frow-vendor_boot">
+          <div class="flash-part-icon">💾</div>
+          <div class="flash-part-name">vendor_boot</div>
+          <div class="flash-part-file" id="ffile-vendor_boot">not loaded</div>
+          <div class="flash-part-status" id="fstat-vendor_boot">—</div>
+        </div>
+        <div class="flash-part-row" id="frow-dtbo">
+          <div class="flash-part-icon">💾</div>
+          <div class="flash-part-name">dtbo</div>
+          <div class="flash-part-file" id="ffile-dtbo">not loaded</div>
+          <div class="flash-part-status" id="fstat-dtbo">—</div>
+        </div>
+      </div>
+      <div class="flash-btns">
+        <button class="flash-btn flash-btn-fetch" id="btn-fetch" onclick="flashFetchFiles()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Fetch Files
+        </button>
+        <button class="flash-btn flash-btn-connect" id="btn-connect" onclick="flashConnect()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17 7H7C4.24 7 2 9.24 2 12s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm0 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h10c1.65 0 3 1.35 3 3s-1.35 3-3 3z"/></svg>
+          Connect Device
+        </button>
+        <button class="flash-btn flash-btn-start" id="btn-flash" onclick="flashStart()" disabled>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2L4.09 12.97 11 13 11 22 19.91 11.03 13 11z"/></svg>
+          Flash
+        </button>
+      </div>
+      <div id="flash-sideload-hint" style="display:none;margin-top:13px;background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.2);border-radius:var(--rsm);padding:13px 15px">
+        <div style="font-weight:700;font-size:.83rem;color:var(--green);margin-bottom:7px;font-family:'Syne',sans-serif">✓ Partitions flashed! Now sideload the ROM:</div>
+        <div style="font-size:.77rem;color:var(--text2);margin-bottom:9px;line-height:1.6">On device: <strong style="color:var(--text)">Apply Update → Apply from ADB</strong></div>
+        <pre style="margin:0"><code>adb sideload Path/to/InfinityX.zip</code><button class="copy-btn" onclick="copyCode(this)">copy</button></pre>
+        <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases/latest" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;margin-top:11px;background:var(--A);color:#000;text-decoration:none;padding:9px 20px;border-radius:var(--rsm);font-family:'Space Grotesk',sans-serif;font-size:.83rem;font-weight:700;box-shadow:0 0 16px var(--glow-a);transition:all .2s" onmouseover="this.style.background='var(--A2)'" onmouseout="this.style.background='var(--A)'">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          Download ZIP
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script type="module">
+'use strict';
+
+/* ── NAV ── */
+function toggleMobileNav() {
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('hamburger');
+  const isOpen = nav.classList.toggle('open');
+  btn.classList.toggle('is-open', isOpen);
+  btn.setAttribute('aria-expanded', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function closeMobileNav() {
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('hamburger');
+  nav.classList.remove('open');
+  btn.classList.remove('is-open');
+  btn.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+document.addEventListener('click', e => {
+  const mn = document.getElementById('mobile-nav');
+  const hb = document.getElementById('hamburger');
+  if (mn.classList.contains('open') && !mn.contains(e.target) && !hb.contains(e.target))
+    closeMobileNav();
+});
+
+/* ── BACKGROUND CANVAS ── */
+(function () {
+  const cv = document.getElementById('bg-canvas'), ctx = cv.getContext('2d');
+  let W, H, t = 0;
+  const blobs = Array.from({ length: 8 }, (_, i) => ({
+    x: Math.random(), y: Math.random(),
+    vx: (Math.random() - .5) * .00032, vy: (Math.random() - .5) * .00032,
+    r: .2 + Math.random() * .18,
+    hue: [220, 225, 270, 275, 218, 265, 222, 272][i],
+    po: Math.random() * Math.PI * 2, ps: Math.random() * .004 + .002
+  }));
+  const pts = Array.from({ length: 90 }, () => ({
+    x: Math.random() * 2 - .5, y: Math.random() * 2 - .5,
+    vx: (Math.random() - .5) * .00035, vy: (Math.random() - .5) * .00035,
+    r: Math.random() * .8 + .2,
+    base: Math.random() * .4 + .08,
+    ts: Math.random() * .03 + .007, to: Math.random() * Math.PI * 2,
+    hue: Math.random() > .5 ? 220 : 270
+  }));
+  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  function draw() {
+    ctx.clearRect(0, 0, W, H); t += .0025;
+    blobs.forEach((b, i) => {
+      b.x += b.vx + Math.sin(t * .45 + i) * .00016;
+      b.y += b.vy + Math.cos(t * .35 + i * 1.2) * .00016;
+      if (b.x < -.4) b.x = 1.4; if (b.x > 1.4) b.x = -.4;
+      if (b.y < -.4) b.y = 1.4; if (b.y > 1.4) b.y = -.4;
+      const pulse = 1 + .055 * Math.sin(t * b.ps * 220 + b.po);
+      const cx = b.x * W, cy = b.y * H, r = b.r * Math.min(W, H) * pulse;
+      const hue = b.hue + (i % 2 === 0 ? t * 4 : -t * 3.5);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, `hsla(${hue},95%,65%,.34)`);
+      g.addColorStop(.5, `hsla(${hue + 15},85%,52%,.13)`);
+      g.addColorStop(1, `hsla(${hue + 30},75%,40%,0)`);
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+    });
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -.1) p.x = 1.1; if (p.x > 1.1) p.x = -.1;
+      if (p.y < -.1) p.y = 1.1; if (p.y > 1.1) p.y = -.1;
+      const a = p.base * (.5 + .5 * Math.sin(t * p.ts * 55 + p.to));
+      const hue = p.hue + Math.sin(t + p.to) * 18;
+      ctx.beginPath(); ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${hue},100%,78%,${a})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── MODALS ── */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (id === 'changelog-modal') loadChangelog();
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function overlayClose(e, o) {
+  if (e.target === o) { o.classList.remove('open'); document.body.style.overflow = ''; }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape')
+    document.querySelectorAll('.modal-overlay.open').forEach(m => {
+      m.classList.remove('open'); document.body.style.overflow = '';
+    });
+});
+
+/* ── UTILS ── */
+function copyCode(btn) {
+  const text = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function switchTab(btn, id) {
+  const scope = btn.closest('.method-panel') || btn.closest('.modal-body');
+  scope.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  scope.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('tab-' + id);
+  if (target) target.classList.add('active');
+}
+
+function selectMethod(id, card) {
+  card.closest('.method-selector').querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  card.closest('.step-content').querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('panel-' + id);
+  if (target) target.classList.add('active');
+}
+
+/* ── CHANGELOG ── */
+const $$ = id => document.getElementById(id);
+let clLoaded = false;
+async function loadChangelog() {
+  if (clLoaded) return;
+  const lo = $$('changelog-loading'), co = $$('changelog-content'), er = $$('changelog-error');
+  lo.style.display = 'block'; co.style.display = 'none'; er.style.display = 'none';
+  try {
+    const r = await fetch('https://raw.githubusercontent.com/hxfuxyy/InfinityX-XiaomiPad5/refs/heads/main/OTA/changelog.txt');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Split on === separator lines (4+ = chars)
+    const rawBlocks = txt.split(/={4,}/g).map(s => s.trim()).filter(Boolean);
+    let entries = [];
+
+    for (const block of rawBlocks) {
+      if (!block) continue;
+      const lines = block.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!lines.length) continue;
+      const hasChangelog = lines.some(l => /^changelog for/i.test(l) || l.startsWith('- '));
+      if (!hasChangelog) continue;
+      let date = '', version = '', items = [];
+      for (const line of lines) {
+        if (/^Date\s*[-\u2013]\s*/i.test(line)) {
+          date = line.replace(/^Date\s*[-\u2013]\s*/i, '').trim();
+        } else if (/^changelog for/i.test(line)) {
+          version = line.replace(/^changelog for\s*/i, '').replace(/:$/, '').trim();
+        } else if (line.startsWith('- ')) {
+          items.push(esc(line.slice(2)));
+        }
+      }
+      if (version || items.length) entries.push({ date, version, items });
+    }
+
+    if (!entries.length) throw new Error('Changelog is empty or could not be parsed.');
+
+    let html = '';
+    entries.forEach(({ date, version, items }, i) => {
+      const titleStr = version ? esc(version) : (date ? esc(date) : 'Update');
+      const dateStr  = (date && version) ? `<div class="changelog-version">${esc(date)}</div>` : '';
+      const itemsHtml = items.length
+        ? '<ul style="padding-left:16px;margin:6px 0 0;list-style:disc">' +
+          items.map(it => `<li style="margin-bottom:4px;font-size:.79rem;color:var(--text2);line-height:1.65">${it}</li>`).join('') +
+          '</ul>'
+        : '';
+      html += `<div class="changelog-item">
+        <div class="changelog-dot">
+          <div class="changelog-dot-circle"></div>
+          ${i < entries.length - 1 ? '<div class="changelog-dot-line"></div>' : ''}
+        </div>
+        <div class="changelog-content">
+          ${i === 0 ? '<div class="changelog-version" style="color:var(--A2);margin-bottom:4px">Latest</div>' : ''}
+          ${dateStr}
+          <div class="changelog-title">${titleStr}</div>
+          ${itemsHtml}
+        </div>
+      </div>`;
+    });
+
+    co.innerHTML = html;
+    lo.style.display = 'none'; co.style.display = 'block'; clLoaded = true;
+  } catch (e) {
+    lo.style.display = 'none'; er.style.display = 'block';
+    er.innerHTML = `<strong>⚠ Failed:</strong> ${e.message} — <a href="https://github.com/hxfuxyy/InfinityX-XiaomiPad5/releases" target="_blank" rel="noopener">View on GitHub →</a> <button onclick="clLoaded=false;loadChangelog()" style="margin-left:10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--A2);padding:3px 11px;border-radius:6px;cursor:pointer;font-size:.77rem;font-family:'Space Grotesk',sans-serif">Retry</button>`;
+  }
+}
+
+/* ── WEB FLASHER ── */
+const flashState = { device: null, files: {}, flashing: false };
+const PARTITIONS = ['boot', 'vendor_boot', 'dtbo'];
+
+function flashLog(msg, type = 'inf') {
+  const log = document.getElementById('flash-log');
+  const p = document.createElement('p');
+  p.className = 'flash-log-line ' + (type === 'warn' ? 'warn' : type);
+  p.textContent = msg;
+  log.appendChild(p);
+  log.scrollTop = log.scrollHeight;
+}
+function flashSetProgress(pct) {
+  document.getElementById('flash-progress-bar').style.width = pct + '%';
+}
+function flashSetPartStatus(part, label, cls) {
+  const s = document.getElementById('fstat-' + part);
+  if (!s) return;
+  s.textContent = label; s.className = 'flash-part-status ' + cls;
+  const row = document.getElementById('frow-' + part);
+  if (row) row.className = 'flash-part-row ' + (cls === 'ok' ? 'done' : cls === 'err' ? 'error' : cls === 'run' ? 'flashing' : cls === 'ready' ? 'ready' : '');
+}
+
+async function flashFetchFiles() {
+  const btn = document.getElementById('btn-fetch');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  flashLog('Loading files from HuggingFace…');
+  const HF = 'https://huggingface.co/datasets/zxcwsurx/nabu-infinity/resolve/main/';
+  const sources = {
+    boot:        { name: 'boot.img',        url: HF + 'boot.img' },
+    vendor_boot: { name: 'vendor_boot.img', url: HF + 'vendor_boot.img' },
+    dtbo:        { name: 'dtbo.img',        url: HF + 'dtbo.img' }
+  };
+  PARTITIONS.forEach(p => {
+    const s = sources[p];
+    flashState.files[p] = { url: s.url, name: s.name, blob: null };
+    document.getElementById('ffile-' + p).textContent = s.name;
+    flashSetPartStatus(p, 'ready', 'ready');
+    flashLog('Ready: ' + s.name, 'ok');
+  });
+  flashLog('All files ready. Connect your device.', 'ok');
+  if (flashState.device) document.getElementById('btn-flash').disabled = false;
+  btn.disabled = false; btn.textContent = 'Fetch Files';
+}
+
+async function flashConnect() {
+  if (!navigator.usb) { flashLog('WebUSB not supported. Use Chrome/Edge/Opera.', 'err'); return; }
+  const btn = document.getElementById('btn-connect');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  try {
+    if (!window._FastbootDevice) {
+      flashLog('Loading fastboot library…', 'inf');
+      const mod = await import('https://unpkg.com/android-fastboot@1.1.0/dist/fastboot.mjs');
+      window._FastbootDevice = mod.FastbootDevice;
+    }
+    flashState.device = new window._FastbootDevice();
+    await flashState.device.connect();
+    const product = await flashState.device.getVariable('product').catch(() => 'unknown');
+    const slot    = await flashState.device.getVariable('current-slot').catch(() => '—');
+    document.getElementById('flash-device-name').textContent = product;
+    document.getElementById('flash-device-slot').textContent = slot;
+    document.getElementById('flash-device-info').classList.add('visible');
+    flashLog('Connected: ' + product + ' (slot: ' + slot + ')', 'ok');
+    btn.textContent = '✓ Connected';
+    btn.style.cssText += ';background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.28);color:var(--green)';
+    const hasFiles = PARTITIONS.some(p => flashState.files[p]);
+    if (hasFiles) document.getElementById('btn-flash').disabled = false;
+    else flashLog('Connect OK. Now click "Fetch Files" then Flash.', 'inf');
+  } catch (e) {
+    flashLog('Connect failed: ' + e.message, 'err');
+    btn.disabled = false; btn.textContent = 'Connect Device';
+    flashState.device = null;
+  }
+}
+
+async function flashStart() {
+  if (flashState.flashing) return;
+  if (!flashState.device) { flashLog('No device connected.', 'err'); return; }
+  const ready = PARTITIONS.filter(p => flashState.files[p] && flashState.files[p].url);
+  if (!ready.length) { flashLog('No files fetched. Click Fetch Files first.', 'err'); return; }
+  flashState.flashing = true;
+  document.getElementById('btn-flash').disabled = true;
+  document.getElementById('btn-connect').disabled = true;
+  document.getElementById('btn-fetch').disabled = true;
+  flashLog('Starting flash sequence…', 'inf');
+  let done = 0;
+  for (const part of ready) {
+    const f = flashState.files[part];
+    flashSetPartStatus(part, 'downloading…', 'run');
+    flashLog('Downloading ' + f.name + '…');
+    try {
+      const resp = await fetch(f.url);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      f.blob = await resp.blob();
+      flashLog('Downloaded ' + f.name + ' (' + Math.round(f.blob.size / 1024 / 1024) + ' MB)', 'ok');
+    } catch (e) {
+      flashLog('Download failed for ' + f.name + ': ' + e.message, 'err');
+      flashSetPartStatus(part, 'dl error', 'err');
+      continue;
+    }
+    flashSetPartStatus(part, 'flashing…', 'run');
+    flashLog('Flashing ' + part + '…');
+    flashSetProgress(Math.round((done / ready.length) * 80));
+    try {
+      await flashState.device.flashBlob(part, f.blob, prog => {
+        const pct = Math.round((done / ready.length) * 80 + (prog * (80 / ready.length)));
+        flashSetProgress(pct);
+      });
+      flashSetPartStatus(part, '✓ done', 'ok');
+      flashLog(part + ' flashed OK', 'ok');
+      done++;
+      flashSetProgress(Math.round((done / ready.length) * 100));
+    } catch (e) {
+      flashSetPartStatus(part, 'error', 'err');
+      flashLog('Flash error (' + part + '): ' + e.message, 'err');
+    }
+  }
+  flashSetProgress(100);
+  flashLog('Partitions flashed. Rebooting to recovery…', 'ok');
+  try {
+    await flashState.device.runCommand('reboot-recovery');
+    flashLog('Rebooted to recovery!', 'ok');
+  } catch (e) {
+    flashLog('Auto-reboot failed: ' + e.message + ' — run manually:', 'warn');
+    flashLog('fastboot reboot recovery', 'inf');
+  }
+  flashLog('In recovery → Apply Update → Apply from ADB, then:', 'inf');
+  flashLog('adb sideload Path/to/InfinityX.zip', 'inf');
+  document.getElementById('flash-sideload-hint').style.display = 'block';
+  flashState.flashing = false;
+  flashState.device = null;
+  document.getElementById('btn-fetch').disabled = false;
+}
+
+/* ── STATS ── */
+async function loadStats() {
+  try {
+    const r = await fetch('https://api.github.com/repos/hxfuxyy/InfinityX-XiaomiPad5/releases/latest', {
+      headers: { Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return;
+    const rel = await r.json();
+    const sv = $$('stat-version'), sd = $$('stat-date');
+    if (sv) sv.textContent = rel.tag_name || '—';
+    if (sd) {
+      const d = new Date(rel.published_at);
+      sd.textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+    }
+  } catch (e) { /* fail silently */ }
+}
+
+/* ── EXPOSE GLOBALS (needed for onclick attrs) ── */
+window.toggleMobileNav  = toggleMobileNav;
+window.closeMobileNav   = closeMobileNav;
+window.openModal        = openModal;
+window.closeModal       = closeModal;
+window.overlayClose     = overlayClose;
+window.copyCode         = copyCode;
+window.switchTab        = switchTab;
+window.selectMethod     = selectMethod;
+window.flashFetchFiles  = flashFetchFiles;
+window.flashConnect     = flashConnect;
+window.flashStart       = flashStart;
+
+window.addEventListener('DOMContentLoaded', loadStats);
+</script>
+</body>
+</html>
