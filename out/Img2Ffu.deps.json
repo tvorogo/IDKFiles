@@ -1,0 +1,214 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0/linux-arm64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {},
+    ".NETCoreApp,Version=v8.0/linux-arm64": {
+      "Img2Ffu/1.0.0": {
+        "dependencies": {
+          "CommandLineParser": "2.9.1",
+          "Img2Ffu.Library": "1.0.0"
+        },
+        "runtime": {
+          "Img2Ffu.dll": {}
+        }
+      },
+      "CommandLineParser/2.9.1": {
+        "runtime": {
+          "lib/netstandard2.0/CommandLine.dll": {
+            "assemblyVersion": "2.9.1.0",
+            "fileVersion": "2.9.1.0"
+          }
+        }
+      },
+      "LTRData.DiscUtils.Core/1.0.51": {
+        "dependencies": {
+          "LTRData.DiscUtils.Streams": "1.0.51",
+          "Microsoft.Bcl.HashCode": "6.0.0",
+          "System.Text.Encoding.CodePages": "9.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/DiscUtils.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.51.0"
+          }
+        }
+      },
+      "LTRData.DiscUtils.Ntfs/1.0.51": {
+        "dependencies": {
+          "LTRData.DiscUtils.Core": "1.0.51",
+          "Microsoft.Bcl.HashCode": "6.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/DiscUtils.Ntfs.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.51.0"
+          }
+        }
+      },
+      "LTRData.DiscUtils.Streams/1.0.51": {
+        "dependencies": {
+          "LTRData.Extensions": "1.0.11",
+          "Microsoft.Bcl.HashCode": "6.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/DiscUtils.Streams.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.51.0"
+          }
+        }
+      },
+      "LTRData.DiscUtils.Vhd/1.0.51": {
+        "dependencies": {
+          "LTRData.DiscUtils.Core": "1.0.51"
+        },
+        "runtime": {
+          "lib/net8.0/DiscUtils.Vhd.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.51.0"
+          }
+        }
+      },
+      "LTRData.DiscUtils.Vhdx/1.0.51": {
+        "dependencies": {
+          "LTRData.DiscUtils.Core": "1.0.51"
+        },
+        "runtime": {
+          "lib/net8.0/DiscUtils.Vhdx.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.51.0"
+          }
+        }
+      },
+      "LTRData.Extensions/1.0.11": {
+        "runtime": {
+          "lib/net8.0/LTRData.Extensions.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.11.0"
+          }
+        }
+      },
+      "Microsoft.Bcl.HashCode/6.0.0": {
+        "runtime": {
+          "lib/net6.0/Microsoft.Bcl.HashCode.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.24.56208"
+          }
+        }
+      },
+      "System.Text.Encoding.CodePages/9.0.0": {
+        "runtime": {
+          "lib/net8.0/System.Text.Encoding.CodePages.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
+          }
+        }
+      },
+      "Img2Ffu.Library/1.0.0": {
+        "dependencies": {
+          "Img2Ffu.Library.Compression.Windows": "1.0.0",
+          "LTRData.DiscUtils.Ntfs": "1.0.51",
+          "LTRData.DiscUtils.Vhd": "1.0.51",
+          "LTRData.DiscUtils.Vhdx": "1.0.51"
+        },
+        "runtime": {
+          "Img2Ffu.Library.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Img2Ffu.Library.Compression.Windows/1.0.0": {
+        "runtime": {
+          "Img2Ffu.Library.Compression.Windows.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Img2Ffu/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CommandLineParser/2.9.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OE0sl1/sQ37bjVsPKKtwQlWDgqaxWgtme3xZz7JssWUzg5JpMIyHgCTY9MVMxOg48fJ1AgGT3tgdH5m/kQ5xhA==",
+      "path": "commandlineparser/2.9.1",
+      "hashPath": "commandlineparser.2.9.1.nupkg.sha512"
+    },
+    "LTRData.DiscUtils.Core/1.0.51": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KzQ8rHDsauFEoC1DZKdinfr1TX7Z80XjrRmS2GFpk3uM1pLcpTabe30sZSxb98nVyI9dAST+m/53Hu+EGeVWTQ==",
+      "path": "ltrdata.discutils.core/1.0.51",
+      "hashPath": "ltrdata.discutils.core.1.0.51.nupkg.sha512"
+    },
+    "LTRData.DiscUtils.Ntfs/1.0.51": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qAXIyfGuIS/Xmmou1qiZuvNurTmzZoivoO70KckhSs95pUzm19kTtxw3AlHqC+tR+Atwp+c7jviLcIyRrBU0TQ==",
+      "path": "ltrdata.discutils.ntfs/1.0.51",
+      "hashPath": "ltrdata.discutils.ntfs.1.0.51.nupkg.sha512"
+    },
+    "LTRData.DiscUtils.Streams/1.0.51": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mOKTKqmAn0Gck+6W6FpK4378e7rNcMiDPf9yUwkjkjw0A04Ok3g56/xwEVVMJfmlQg4QolXRiuyXcmgSwYbbEg==",
+      "path": "ltrdata.discutils.streams/1.0.51",
+      "hashPath": "ltrdata.discutils.streams.1.0.51.nupkg.sha512"
+    },
+    "LTRData.DiscUtils.Vhd/1.0.51": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-R+bqRlLV/5vh4v7TCurHG8nc6CK4Gbu+IMhD2U8DAmC6FtMzIkKnu3oJpMb0GZsdVaAQ+EB3Rts4RlpJmd7teA==",
+      "path": "ltrdata.discutils.vhd/1.0.51",
+      "hashPath": "ltrdata.discutils.vhd.1.0.51.nupkg.sha512"
+    },
+    "LTRData.DiscUtils.Vhdx/1.0.51": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vNS61laFVop3jboeAQJ6dp8Sr2qpPCQBv6xOWzCeDMj++iMVWbTleCCmTCOudIDnPnYXIih56lSPjDX0/6yshg==",
+      "path": "ltrdata.discutils.vhdx/1.0.51",
+      "hashPath": "ltrdata.discutils.vhdx.1.0.51.nupkg.sha512"
+    },
+    "LTRData.Extensions/1.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-quAY3ARf3ID0ygUxZywuY78hgAZcy7CLeSHSa3do5gbB5dtmxRw0mRVs2mQ3iO99OHd//ol6TAxPsmMhiFJJ9g==",
+      "path": "ltrdata.extensions/1.0.11",
+      "hashPath": "ltrdata.extensions.1.0.11.nupkg.sha512"
+    },
+    "Microsoft.Bcl.HashCode/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GI4jcoi6eC9ZhNOQylIBaWOQjyGaR8T6N3tC1u8p3EXfndLCVNNWa+Zp+ocjvvS3kNBN09Zma2HXL0ezO0dRfw==",
+      "path": "microsoft.bcl.hashcode/6.0.0",
+      "hashPath": "microsoft.bcl.hashcode.6.0.0.nupkg.sha512"
+    },
+    "System.Text.Encoding.CodePages/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GxJTSFPQpoVd0vQRgq8hwesicxgZoHTbYMvR/UMM4IzhkHMT+ebZE11c2C1gUyxz55zWtGCWktMTHvmgLzob9g==",
+      "path": "system.text.encoding.codepages/9.0.0",
+      "hashPath": "system.text.encoding.codepages.9.0.0.nupkg.sha512"
+    },
+    "Img2Ffu.Library/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Img2Ffu.Library.Compression.Windows/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
